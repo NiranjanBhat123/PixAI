@@ -25,21 +25,16 @@ logger = logging.getLogger(__name__)
 
 
 def create_server() -> FastMCP:
-    """
-    Factory function: builds the MCP server, wires dependencies.
-    This is our composition root.
-    """
     logger.info("Initializing PixAI MCP Server...")
 
     mcp = FastMCP(
         name="pixai-mcp-server",
         instructions="You are PixAI, a creative assistant that helps users with image captions, edits, and artistic styles.",
+        host="0.0.0.0",
+        port=8000
     )
 
-    # Build shared service once — injected into all tools (DIP)
     gemini_service = GeminiService()
-
-    # Register each tool group
     register_caption_tool(mcp, gemini_service)
     register_edit_tool(mcp, gemini_service)
     register_style_tool(mcp, gemini_service)
@@ -47,9 +42,7 @@ def create_server() -> FastMCP:
     logger.info("PixAI MCP Server ready with tools: captions, edits, styles")
     return mcp
 
-
-# Module-level variable — required for `mcp dev` to discover the server
 mcp = create_server()
 
 if __name__ == "__main__":
-    mcp.run(transport="stdio")
+    mcp.run(transport="sse")   # host/port already set in constructor above
