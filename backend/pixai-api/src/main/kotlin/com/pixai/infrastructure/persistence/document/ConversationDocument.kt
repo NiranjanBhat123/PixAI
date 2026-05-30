@@ -1,5 +1,4 @@
-package com.pixai.infrastructure.persistence.document
-
+package com.pixai.infrastructure.persistence.document  // was: persistance
 import com.pixai.domain.conversation.ConversationStatus
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
