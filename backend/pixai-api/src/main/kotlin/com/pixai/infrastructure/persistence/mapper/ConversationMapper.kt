@@ -1,5 +1,4 @@
 package com.pixai.infrastructure.persistence.mapper
-
 import com.pixai.domain.conversation.Conversation
 import com.pixai.infrastructure.persistence.document.ConversationDocument
 
