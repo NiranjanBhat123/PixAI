@@ -124,3 +124,61 @@ class GeminiService:
         """
         logger.info("Requesting style suggestions from Gemini")
         return self._call_gemini(prompt, image)
+    
+    def generate_styled_image(self, image_base64: str, style: str, style_description: str) -> str:
+        import time
+        start_time = time.time()
+
+        # Decode to bytes — NOT PIL Image
+        try:
+            image_bytes = base64.b64decode(image_base64)
+        except Exception as e:
+            raise ImageProcessingException("Could not decode image.", cause=e)
+
+        style_prompts = {
+            "ghibli": "Transform this image into Studio Ghibli anime style. Use soft watercolor-like textures, warm lighting, gentle expressive features. Preserve the people, composition and setting.",
+            "black_and_white": "Convert this image to a beautiful high-contrast black and white photograph. Emphasize textures, shadows and light. Keep all subjects and composition.",
+            "pencil_sketch": "Transform this image into a detailed pencil sketch drawing. Use fine graphite lines, cross-hatching for shadows, clean linework for faces and details.",
+            "cartoon": "Transform this into a vibrant cartoon illustration with bold clean outlines, flat bright colors, and friendly expressive faces. Keep the original composition.",
+        }
+
+        prompt = style_prompts.get(
+            style.lower(),
+            f"Transform this image in the style of: {style_description}. Preserve the people and composition."
+        )
+
+        logger.info("Generating styled image: style=%s, image_size=%d bytes", style, len(image_base64))
+
+        try:
+            image_part = types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg")
+
+            logger.info("Calling Gemini image generation API...")
+            response = self._client.models.generate_content(
+                model="gemini-2.5-flash-image",
+                contents=[prompt, image_part],                       # ← fixed image format
+                config=types.GenerateContentConfig(
+                    response_modalities=["IMAGE", "TEXT"]
+                )
+            )
+
+            elapsed = time.time() - start_time
+            logger.info("Gemini responded after %.2f seconds", elapsed)
+
+            if not response.candidates:
+                raise GeminiServiceException(f"No candidates returned by Gemini for style: {style}")
+
+            for i, part in enumerate(response.candidates[0].content.parts):
+                if hasattr(part, 'inline_data') and part.inline_data is not None:
+                    result_bytes = part.inline_data.data
+                    logger.info("Styled image generated: style=%s, time=%.2fs, size=%d bytes",
+                                style, elapsed, len(result_bytes))
+                    return base64.b64encode(result_bytes).decode("utf-8")
+
+            raise GeminiServiceException(f"No image data in Gemini response for style: {style}")
+
+        except GeminiServiceException:
+            raise
+        except Exception as e:
+            elapsed = time.time() - start_time
+            logger.error("Style generation failed for %s after %.2fs: %s", style, elapsed, str(e))
+            raise GeminiServiceException(f"Style generation failed for {style}.", cause=e)

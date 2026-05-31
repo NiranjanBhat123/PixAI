@@ -4,6 +4,7 @@ import com.pixai.domain.ai.CaptionResult
 import com.pixai.domain.ai.EditResult
 import com.pixai.domain.ai.StyleResult
 import com.pixai.domain.conversation.Conversation
+import com.pixai.domain.ai.ImageResult
 
 object AiResponseMapper {
 
@@ -49,4 +50,13 @@ object AiResponseMapper {
             }
         )
     }
+
+
+    fun toImageResultResponse(result: ImageResult): ImageResultResponse {
+    return ImageResultResponse(
+        imageBase64 = result.imageBase64,
+        format = result.format,
+        message = result.message
+    )
+}
 }
