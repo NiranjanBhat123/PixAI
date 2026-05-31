@@ -15,19 +15,21 @@ class McpConfig(
     @Value("\${pixai.mcp.server.url:http://localhost:8000}")
     private val mcpServerUrl: String
 ) {
-
     private val logger = LoggerFactory.getLogger(McpConfig::class.java)
 
     @Bean
     fun mcpAsyncClient(): McpAsyncClient {
         logger.info("Creating MCP async client for server: {}", mcpServerUrl)
+        return buildAndInitClient()
+    }
 
+    fun buildAndInitClient(): McpAsyncClient {
         val transport = HttpClientSseClientTransport
             .builder(mcpServerUrl)
             .build()
 
         val client = McpClient.async(transport)
-            .requestTimeout(Duration.ofSeconds(30))
+            .requestTimeout(Duration.ofSeconds(120))
             .build()
 
         Mono.from(client.initialize())

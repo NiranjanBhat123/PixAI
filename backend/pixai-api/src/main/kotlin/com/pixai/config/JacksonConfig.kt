@@ -7,6 +7,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import com.fasterxml.jackson.databind.DeserializationFeature
 
 @Configuration
 class JacksonConfig {
@@ -15,8 +16,9 @@ class JacksonConfig {
     fun objectMapper(): ObjectMapper {
         return ObjectMapper()
             .registerKotlinModule()
-            .registerModule(JavaTimeModule())              
+            .registerModule(JavaTimeModule())
             .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)  // ← add this
     }
 }

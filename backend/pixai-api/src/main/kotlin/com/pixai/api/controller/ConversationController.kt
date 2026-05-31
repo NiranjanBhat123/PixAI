@@ -6,6 +6,9 @@ import com.pixai.api.dto.response.CaptionResponse
 import com.pixai.api.dto.response.ConversationResponse
 import com.pixai.api.dto.response.EditResponse
 import com.pixai.api.dto.response.StyleResponse
+import com.pixai.api.dto.response.ImageResultResponse
+import com.pixai.api.dto.request.ApplyEditsRequest
+import com.pixai.api.dto.request.GenerateStyleRequest
 import com.pixai.application.conversation.ConversationService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -25,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import reactor.core.publisher.Mono
+import org.springframework.web.bind.annotation.RequestBody
 
 @Tag(name = "Conversations", description = "Manage image conversations and AI suggestions")
 @RestController
@@ -126,4 +130,32 @@ class ConversationController(
         return conversationService.getStyles(conversationId)
             .map { ApiResponse(success = true, data = AiResponseMapper.toStyleResponse(it)) }
     }
+
+    @Operation(
+    summary = "Apply edits to the image",
+    description = "Applies brightness, contrast, saturation, sharpness and warmth adjustments"
+)
+@PostMapping("/{conversationId}/edits/apply")
+fun applyEdits(
+    @Parameter(description = "Conversation ID") @PathVariable conversationId: String,
+    @RequestBody request: ApplyEditsRequest
+): Mono<ApiResponse<ImageResultResponse>> {
+    logger.info("Apply edits request for conversation: {}", conversationId)
+    return conversationService.applyEdits(conversationId, request)
+        .map { ApiResponse(success = true, data = AiResponseMapper.toImageResultResponse(it)) }
+}
+
+@Operation(
+    summary = "Generate a styled version of the image",
+    description = "Generates Ghibli, B&W, pencil sketch or cartoon versions using AI"
+)
+@PostMapping("/{conversationId}/styles/generate")
+fun generateStyle(
+    @Parameter(description = "Conversation ID") @PathVariable conversationId: String,
+    @RequestBody request: GenerateStyleRequest
+): Mono<ApiResponse<ImageResultResponse>> {
+    logger.info("Style generation request: style={} for conversation: {}", request.style, conversationId)
+    return conversationService.generateStyle(conversationId, request.style, request.styleDescription)
+        .map { ApiResponse(success = true, data = AiResponseMapper.toImageResultResponse(it)) }
+}
 }

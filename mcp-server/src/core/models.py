@@ -39,3 +39,17 @@ class StyleSuggestion(BaseModel):
 
 class StyleResult(BaseModel):
     suggestions: list[StyleSuggestion] = Field(description="List of style version suggestions")
+    
+
+class ImageEditParams(BaseModel):
+    brightness: float = Field(default=0.0, description="Brightness adjustment -1.0 to 1.0")
+    contrast: float = Field(default=0.0, description="Contrast adjustment -1.0 to 1.0")
+    saturation: float = Field(default=0.0, description="Saturation adjustment -1.0 to 1.0")
+    sharpness: float = Field(default=0.0, description="Sharpness adjustment -1.0 to 1.0")
+    warmth: float = Field(default=0.0, description="Warmth adjustment -1.0 to 1.0")
+
+
+class ImageResult(BaseModel):
+    image_base64: str = Field(description="Base64 encoded result image")
+    format: str = Field(default="jpeg", description="Image format: jpeg or png")
+    message: str = Field(description="Description of what was done")

@@ -5,9 +5,11 @@ import com.pixai.common.exception.PixAIException
 import com.pixai.domain.ai.CaptionResult
 import com.pixai.domain.ai.EditResult
 import com.pixai.domain.ai.StyleResult
+import com.pixai.domain.ai.ImageResult
 import com.pixai.domain.conversation.Conversation
 import com.pixai.domain.conversation.ConversationStatus
 import com.pixai.domain.image.Image
+import com.pixai.api.dto.request.ApplyEditsRequest
 import com.pixai.infrastructure.persistence.mapper.ConversationMapper
 import com.pixai.infrastructure.persistence.mapper.ImageMapper
 import com.pixai.infrastructure.persistence.repository.ConversationRepository
@@ -30,6 +32,8 @@ interface ConversationService {
     fun getCaptions(conversationId: String): Mono<CaptionResult>
     fun getEdits(conversationId: String): Mono<EditResult>
     fun getStyles(conversationId: String): Mono<StyleResult>
+    fun applyEdits(conversationId: String, request: ApplyEditsRequest): Mono<ImageResult>
+    fun generateStyle(conversationId: String, style: String, description: String): Mono<ImageResult>
 }
 
 // --- Implementation ---
@@ -108,6 +112,26 @@ class ConversationServiceImpl(
         return fetchImageBase64(conversationId)
             .flatMap { mcpToolService.suggestStyles(it) }
     }
+
+    override fun applyEdits(conversationId: String, request: ApplyEditsRequest): Mono<ImageResult> {
+    logger.info("Applying edits for conversation: {}", conversationId)
+    return fetchImageBase64(conversationId).flatMap { imageBase64 ->
+        val params = mapOf(
+            "brightness" to request.brightness,
+            "contrast" to request.contrast,
+            "saturation" to request.saturation,
+            "sharpness" to request.sharpness,
+            "warmth" to request.warmth
+        )
+        mcpToolService.applyImageEdits(imageBase64, params)
+    }
+}
+
+override fun generateStyle(conversationId: String, style: String, description: String): Mono<ImageResult> {
+    logger.info("Generating style '{}' for conversation: {}", style, conversationId)
+    return fetchImageBase64(conversationId)
+        .flatMap { mcpToolService.generateStyledImage(it, style, description) }
+}
 
     // Private helper — fetches image base64 for a conversation
     private fun fetchImageBase64(conversationId: String): Mono<String> {
