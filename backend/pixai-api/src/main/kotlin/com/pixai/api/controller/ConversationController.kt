@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import reactor.core.publisher.Mono
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.PatchMapping
 
 @Tag(name = "Conversations", description = "Manage image conversations and AI suggestions")
 @RestController
@@ -157,5 +158,16 @@ fun generateStyle(
     logger.info("Style generation request: style={} for conversation: {}", request.style, conversationId)
     return conversationService.generateStyle(conversationId, request.style, request.styleDescription)
         .map { ApiResponse(success = true, data = AiResponseMapper.toImageResultResponse(it)) }
+}
+
+
+@Operation(summary = "End a conversation", description = "Marks the conversation as COMPLETED")
+@PatchMapping("/{conversationId}/end")
+fun endConversation(
+    @Parameter(description = "Conversation ID") @PathVariable conversationId: String
+): Mono<ApiResponse<ConversationResponse>> {
+    logger.info("End conversation request: {}", conversationId)
+    return conversationService.endConversation(conversationId)
+        .map { ApiResponse(success = true, data = AiResponseMapper.toConversationResponse(it), message = "Conversation ended.") }
 }
 }

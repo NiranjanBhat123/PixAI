@@ -34,6 +34,8 @@ interface ConversationService {
     fun getStyles(conversationId: String): Mono<StyleResult>
     fun applyEdits(conversationId: String, request: ApplyEditsRequest): Mono<ImageResult>
     fun generateStyle(conversationId: String, style: String, description: String): Mono<ImageResult>
+    fun endConversation(conversationId: String): Mono<Conversation>
+
 }
 
 // --- Implementation ---
@@ -131,6 +133,21 @@ override fun generateStyle(conversationId: String, style: String, description: S
     logger.info("Generating style '{}' for conversation: {}", style, conversationId)
     return fetchImageBase64(conversationId)
         .flatMap { mcpToolService.generateStyledImage(it, style, description) }
+}
+
+override fun endConversation(conversationId: String): Mono<Conversation> {
+    logger.info("Ending conversation: {}", conversationId)
+    return conversationRepository.findById(conversationId)
+        .switchIfEmpty(Mono.error(PixAIException("Conversation not found: $conversationId")))
+        .flatMap { doc ->
+            val updated = doc.copy(
+                status = ConversationStatus.COMPLETED,
+                updatedAt = Instant.now()
+            )
+            conversationRepository.save(updated)
+        }
+        .map { ConversationMapper.toDomain(it) }
+        .doOnSuccess { logger.info("Conversation ended: {}", it.id) }
 }
 
     // Private helper — fetches image base64 for a conversation
