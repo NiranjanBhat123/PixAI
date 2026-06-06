@@ -6,6 +6,7 @@ data class CaptionSuggestion(
 )
 
 data class CaptionResult(
-    val suggestions: List<CaptionSuggestion>,
-    val imageDescription: String
+    val suggestions: List<CaptionSuggestion> = emptyList(),
+    val imageDescription: String = "",
+    val error: String? = null
 )

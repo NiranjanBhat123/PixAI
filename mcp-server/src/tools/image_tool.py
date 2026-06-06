@@ -2,17 +2,23 @@ import logging
 from mcp.server.fastmcp import FastMCP
 from src.services.gemini_service import GeminiService
 from src.services.image_edit_service import ImageEditService
+from src.services.style_filter_service import StyleFilterService   # ← new import
 from src.core.models import ImageResult
 from src.core.exceptions import GeminiServiceException, ImageProcessingException
 
 logger = logging.getLogger(__name__)
 
 
-def register_image_tool(mcp: FastMCP, gemini_service: GeminiService, edit_service: ImageEditService) -> None:
+def register_image_tool(
+    mcp: FastMCP,
+    gemini_service: GeminiService,
+    edit_service: ImageEditService,
+    filter_service: StyleFilterService       
+) -> None:
 
     @mcp.tool(
         name="apply_image_edits",
-        description="Apply brightness, contrast, saturation, sharpness and warmth adjustments to an image. Returns the edited image as base64.",
+        description="Apply brightness, contrast, saturation, sharpness and warmth adjustments to an image.",
     )
     def apply_image_edits(
         image_base64: str,
@@ -32,40 +38,31 @@ def register_image_tool(mcp: FastMCP, gemini_service: GeminiService, edit_servic
                 sharpness=sharpness,
                 warmth=warmth
             )
-            result = ImageResult(
+            return ImageResult(
                 image_base64=result_base64,
                 format="jpeg",
                 message=f"Edits applied: brightness={brightness}, contrast={contrast}, saturation={saturation}"
-            )
-            logger.info("Image edits applied successfully")
-            return result.model_dump()
+            ).model_dump()
         except ImageProcessingException as e:
             logger.error("Image edit failed: %s", str(e))
-            return {"error": str(e), "image_base64": ""}
+            return {"error": str(e), "image_base64": "", "format": "jpeg", "message": str(e)}
 
     @mcp.tool(
-        name="generate_styled_image",
-        description="Generate an artistic styled version of an image. Styles: ghibli, black_and_white, pencil_sketch, cartoon.",
+        name="apply_style_filter",
+        description="Apply an artistic Pillow filter to an image. Styles: pencil_sketch, vintage, oil_painting, emboss.",
     )
-    def generate_styled_image(
+    def apply_style_filter(
         image_base64: str,
-        style: str,
-        style_description: str = ""
+        style: str
     ) -> dict:
-        logger.info("generate_styled_image tool called for style: %s", style)
+        logger.info("apply_style_filter tool called: style=%s", style)
         try:
-            result_base64 = gemini_service.generate_styled_image(
-                image_base64=image_base64,
-                style=style,
-                style_description=style_description
-            )
-            result = ImageResult(
+            result_base64 = filter_service.apply_style(image_base64, style)
+            return ImageResult(
                 image_base64=result_base64,
                 format="jpeg",
-                message=f"Generated {style} version of your image."
-            )
-            logger.info("Styled image generated successfully: %s", style)
-            return result.model_dump()
-        except (GeminiServiceException, ImageProcessingException) as e:
-            logger.error("Style generation failed: %s", str(e))
-            return {"error": str(e), "image_base64": ""}
+                message=f"Applied {style} style to your image."
+            ).model_dump()
+        except ImageProcessingException as e:
+            logger.error("Style filter failed: %s", str(e))
+            return {"error": str(e), "image_base64": "", "format": "jpeg", "message": str(e)}

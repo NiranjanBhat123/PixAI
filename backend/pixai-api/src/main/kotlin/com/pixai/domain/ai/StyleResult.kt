@@ -7,5 +7,6 @@ data class StyleSuggestion(
 )
 
 data class StyleResult(
-    val suggestions: List<StyleSuggestion>
+    val suggestions: List<StyleSuggestion> = emptyList(),
+    val error: String? = null
 )

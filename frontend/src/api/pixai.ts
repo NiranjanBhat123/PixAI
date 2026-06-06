@@ -106,3 +106,17 @@ export async function endConversation(
     { method: "PATCH" }
   );
 }
+
+export async function applyStyleFilter(
+  conversationId: string,
+  filter: string
+): Promise<ApiResponse<ImageResultData>> {
+  return apiFetch<ImageResultData>(
+    `/conversations/${conversationId}/styles/filter`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filter }),
+    }
+  );
+}

@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 
 from src.services.gemini_service import GeminiService
 from src.services.image_edit_service import ImageEditService
+from src.services.style_filter_service import StyleFilterService
 from src.tools.caption_tool import register_caption_tool
 from src.tools.edit_tool import register_edit_tool
 from src.tools.style_tool import register_style_tool
@@ -38,10 +39,11 @@ def create_server() -> FastMCP:
 
     gemini_service = GeminiService()
     edit_service = ImageEditService()
+    filter_service = StyleFilterService() 
     register_caption_tool(mcp, gemini_service)
     register_edit_tool(mcp, gemini_service)
     register_style_tool(mcp, gemini_service)
-    register_image_tool(mcp, gemini_service, edit_service)
+    register_image_tool(mcp, gemini_service, edit_service, filter_service)
 
     logger.info("PixAI MCP Server ready with tools: captions, edits, styles, image_generation")
     return mcp
