@@ -18,8 +18,11 @@ data class EditSuggestion(
 
 data class EditResult(
     @JsonProperty("overall_assessment")
-    val overallAssessment: String,
+    val overallAssessment: String = "",   
 
     @JsonProperty("suggestions")
-    val suggestions: List<EditSuggestion>
+    val suggestions: List<EditSuggestion> = emptyList(),
+
+    @JsonProperty("error")
+    val error: String? = null             
 )

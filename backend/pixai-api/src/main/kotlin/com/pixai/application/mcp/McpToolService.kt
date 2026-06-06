@@ -19,6 +19,8 @@ interface McpToolService {
     fun suggestStyles(imageBase64: String): Mono<StyleResult>
     fun applyImageEdits(imageBase64: String, params: Map<String, Any>): Mono<ImageResult>
     fun generateStyledImage(imageBase64: String, style: String, description: String): Mono<ImageResult>
+    fun applyStyleFilter(imageBase64: String, style: String): Mono<ImageResult>
+
 }
 
 @Service
@@ -87,17 +89,33 @@ class McpToolServiceImpl(
         }
     }
 
-    override fun suggestCaptions(imageBase64: String): Mono<CaptionResult> =
-        callTool("suggest_captions", mapOf("image_base64" to imageBase64))
-            .map { objectMapper.readValue(it, CaptionResult::class.java) }
 
-    override fun suggestEdits(imageBase64: String): Mono<EditResult> =
-        callTool("suggest_edits", mapOf("image_base64" to imageBase64))
-            .map { objectMapper.readValue(it, EditResult::class.java) }
 
-    override fun suggestStyles(imageBase64: String): Mono<StyleResult> =
-        callTool("suggest_styles", mapOf("image_base64" to imageBase64))
-            .map { objectMapper.readValue(it, StyleResult::class.java) }
+override fun suggestEdits(imageBase64: String): Mono<EditResult> =
+    callTool("suggest_edits", mapOf("image_base64" to imageBase64))
+        .map { json ->
+            val result = objectMapper.readValue(json, EditResult::class.java)
+            if (result.error != null) {
+                throw PixAIException("Edit suggestions failed: ${result.error}")
+            }
+            result
+        }
+
+override fun suggestCaptions(imageBase64: String): Mono<CaptionResult> =
+    callTool("suggest_captions", mapOf("image_base64" to imageBase64))
+        .map { json ->
+            val result = objectMapper.readValue(json, CaptionResult::class.java)
+            if (result.error != null) throw PixAIException("Caption failed: ${result.error}")
+            result
+        }
+
+override fun suggestStyles(imageBase64: String): Mono<StyleResult> =
+    callTool("suggest_styles", mapOf("image_base64" to imageBase64))
+        .map { json ->
+            val result = objectMapper.readValue(json, StyleResult::class.java)
+            if (result.error != null) throw PixAIException("Style suggestions failed: ${result.error}")
+            result
+        }
 
     override fun applyImageEdits(imageBase64: String, params: Map<String, Any>): Mono<ImageResult> =
         callTool("apply_image_edits", mapOf("image_base64" to imageBase64) + params)
@@ -108,4 +126,8 @@ class McpToolServiceImpl(
             "generate_styled_image",
             mapOf("image_base64" to imageBase64, "style" to style, "style_description" to description)
         ).map { objectMapper.readValue(it, ImageResult::class.java) }
+
+    override fun applyStyleFilter(imageBase64: String, style: String): Mono<ImageResult> =
+    callTool("apply_style_filter", mapOf("image_base64" to imageBase64, "style" to style))
+        .map { objectMapper.readValue(it, ImageResult::class.java) }
 }

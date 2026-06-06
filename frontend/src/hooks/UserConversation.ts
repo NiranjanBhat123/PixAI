@@ -8,6 +8,7 @@ import {
   getStyleSuggestions,
   generateStyle,
   endConversation,
+  applyStyleFilter
 } from "../api/pixai";
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -239,43 +240,43 @@ export function useConversation() {
   /**
    * Generate a specific style
    */
-  const confirmStyle = useCallback(
-    async (style: string, description: string) => {
-      if (!conversationId) return;
-      setError(null);
-      setPhase("loading");
+const confirmStyle = useCallback(
+  async (style: string, _description: string) => {
+    if (!conversationId) return;
+    setError(null);
+    setPhase("loading");
 
-      pushMessage({ role: "user", kind: "text", text: `Generate ${style} version` });
-      pushMessage({
-        role: "assistant",
-        kind: "text",
-        text: `Painting your photo in ${style} style… this takes a moment ✨`,
-      });
+    pushMessage({ role: "user", kind: "text", text: `Apply ${style} style` });
+    pushMessage({
+      role: "assistant",
+      kind: "text",
+      text: `Applying ${style} filter… ✨`,
+    });
 
-      try {
-        const res = await generateStyle(conversationId, style, description);
-        setPhase("active");
-        setMessages((prev) => [
-          ...prev.slice(0, -1),
-          makeMessage({
-            role: "assistant",
-            kind: "style-result",
-            imageResultData: res.data,
-            text: res.data.message,
-          }),
-          makeMessage({
-            role: "assistant",
-            kind: "options-prompt",
-            text: "Want to try another style or something else?",
-          }),
-        ]);
-      } catch (err) {
-        setPhase("active");
-        pushError(err, "confirmStyle");
-      }
-    },
-    [conversationId, pushMessage, pushError]
-  );
+    try {
+      const res = await applyStyleFilter(conversationId, style)  // ← changed
+      setPhase("active");
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        makeMessage({
+          role: "assistant",
+          kind: "style-result",
+          imageResultData: res.data,
+          text: res.data.message,
+        }),
+        makeMessage({
+          role: "assistant",
+          kind: "options-prompt",
+          text: "Want to try another style or something else?",
+        }),
+      ]);
+    } catch (err) {
+      setPhase("active");
+      pushError(err, "confirmStyle");
+    }
+  },
+  [conversationId, pushMessage, pushError]
+);
 
   /**
    * End the current conversation

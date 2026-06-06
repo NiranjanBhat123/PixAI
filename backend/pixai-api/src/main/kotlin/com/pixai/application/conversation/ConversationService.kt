@@ -34,6 +34,7 @@ interface ConversationService {
     fun getStyles(conversationId: String): Mono<StyleResult>
     fun applyEdits(conversationId: String, request: ApplyEditsRequest): Mono<ImageResult>
     fun generateStyle(conversationId: String, style: String, description: String): Mono<ImageResult>
+    fun applyStyleFilter(conversationId: String, style: String): Mono<ImageResult>
     fun endConversation(conversationId: String): Mono<Conversation>
 
 }
@@ -133,6 +134,12 @@ override fun generateStyle(conversationId: String, style: String, description: S
     logger.info("Generating style '{}' for conversation: {}", style, conversationId)
     return fetchImageBase64(conversationId)
         .flatMap { mcpToolService.generateStyledImage(it, style, description) }
+}
+
+override fun applyStyleFilter(conversationId: String, style: String): Mono<ImageResult> {
+    logger.info("Applying style filter '{}' for conversation: {}", style, conversationId)
+    return fetchImageBase64(conversationId)
+        .flatMap { mcpToolService.applyStyleFilter(it, style) }
 }
 
 override fun endConversation(conversationId: String): Mono<Conversation> {

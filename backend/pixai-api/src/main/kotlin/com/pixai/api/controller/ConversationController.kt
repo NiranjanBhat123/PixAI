@@ -9,6 +9,7 @@ import com.pixai.api.dto.response.StyleResponse
 import com.pixai.api.dto.response.ImageResultResponse
 import com.pixai.api.dto.request.ApplyEditsRequest
 import com.pixai.api.dto.request.GenerateStyleRequest
+import com.pixai.api.dto.request.ApplyStyleFilterRequest
 import com.pixai.application.conversation.ConversationService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -169,5 +170,20 @@ fun endConversation(
     logger.info("End conversation request: {}", conversationId)
     return conversationService.endConversation(conversationId)
         .map { ApiResponse(success = true, data = AiResponseMapper.toConversationResponse(it), message = "Conversation ended.") }
+}
+
+
+@Operation(
+    summary = "Apply a Pillow-based style filter",
+    description = "Applies pencil_sketch, vintage, oil_painting, or emboss filter to the image"
+)
+@PostMapping("/{conversationId}/styles/filter")
+fun applyStyleFilter(
+    @Parameter(description = "Conversation ID") @PathVariable conversationId: String,
+    @RequestBody request: ApplyStyleFilterRequest
+): Mono<ApiResponse<ImageResultResponse>> {
+    logger.info("Style filter request: filter={} for conversation: {}", request.filter, conversationId)
+    return conversationService.applyStyleFilter(conversationId, request.filter)
+        .map { ApiResponse(success = true, data = AiResponseMapper.toImageResultResponse(it)) }
 }
 }

@@ -104,23 +104,23 @@ class GeminiService:
         return self._call_gemini(prompt, image)
 
     def get_style_suggestions(self, image_base64: str) -> str:
-        """Ask Gemini to suggest artistic style versions. Returns raw JSON string."""
         image = self._decode_image(image_base64)
         prompt = """
-        Look at this image and suggest which artistic styles would suit it best.
-        Consider: black_and_white, ghibli, pencil_sketch, cartoon.
-        
+        Look at this image and suggest which of these 4 artistic styles would suit it best:
+        pencil_sketch, vintage, oil_painting, emboss
+
         Respond ONLY with valid JSON in this exact format, no extra text, no markdown:
         {
             "suggestions": [
                 {
-                    "style": "black_and_white",
+                    "style": "pencil_sketch",
                     "description": "how this specific image would look in this style",
                     "appeal": "why this style suits this particular image"
                 }
             ]
         }
         Suggest all 4 styles, ranked by how well they suit this image.
+        Use ONLY these exact style names: pencil_sketch, vintage, oil_painting, emboss
         """
         logger.info("Requesting style suggestions from Gemini")
         return self._call_gemini(prompt, image)
