@@ -1,110 +1,103 @@
-# PixAI
+# ✦ PixAI — AI-Powered Photo Editing Assistant
 
-PixAI is an AI-powered image assistant that helps users interact with their photos in a conversational way.
+A conversational assistant that helps you caption, edit, and artistically transform your photos.
+Upload a photo, pick what you want — captions, edits, or artistic styles — and get results in a dark editorial chat interface.
 
-Users can:
+---
 
-* Generate caption suggestions
-* Receive image editing recommendations
-* Apply image enhancements
-* Generate alternate image styles (Black & White, Pencil Sketch, Cartoon, Ghibli-style, etc.)
-* Chat naturally about uploaded images
+## What it does
+
+| | |
+|---|---|
+| **Caption suggestions** | Gemini reads your image and writes 4 captions across different tones |
+| **Edit suggestions + apply** | AI suggests brightness/contrast/etc. values, Pillow applies them |
+| **Artistic style filters** | Pencil sketch, vintage, oil painting, emboss — all via Pillow |
 
 ---
 
 ## Architecture
 
-```text
-React Frontend
-      │
-      ▼
-Spring Boot WebFlux API
-      │
-      ▼
-Python MCP Server
-      │
-      ▼
-Gemini API
+```
+React (localhost:3000)
+    │  HTTP / REST
+    ▼
+Spring Boot WebFlux (localhost:8081) ── MongoDB
+    │  MCP over SSE
+    ▼
+Python MCP Server (localhost:8000)
+    ├── GeminiService ── Gemini API  (captions, edit analysis, style suggestions)
+    ├── ImageEditService ── Pillow   (apply brightness/contrast/warmth/etc.)
+    └── StyleFilterService ── Pillow (pencil sketch, vintage, oil painting, emboss)
 ```
 
 ---
 
-## Tech Stack
+## Tech stack
 
-### Frontend
-
-* React
-* TypeScript
-* Vite
-* React Query
-* Tailwind CSS
-
-### Backend
-
-* Kotlin
-* Spring Boot WebFlux
-* Reactive MongoDB
-* OpenAPI / Swagger
-
-### AI Layer
-
-* Python
-* FastAPI
-* MCP Server
-* Gemini
-
-### Database
-
-* MongoDB
+| Layer | Tech |
+|---|---|
+| Frontend | React 18 + TypeScript + Vite + shadcn/ui |
+| Backend | Kotlin + Spring Boot 3 + WebFlux (reactive) |
+| Database | MongoDB |
+| AI protocol | Model Context Protocol (MCP over SSE) |
+| MCP server | Python + FastMCP + uvicorn |
+| AI model | Google Gemini (gemini-3.5-flash) |
+| Image processing | Pillow |
 
 ---
 
-## Local Development
+## Local setup
 
-### Backend
+### Prerequisites
+
+- Java 21 · Node 22 (LTS) · Python 3.11+ · MongoDB 7+
+- A Gemini API key from [aistudio.google.com](https://aistudio.google.com)
+
+### 1 — Environment
+
+```bash
+echo "GEMINI_API_KEY=your_key_here" > mcp-server/.env
+```
+
+### 2 — Start MongoDB
+
+```bash
+brew services start mongodb-community   # macOS
+```
+
+### 3 — Start MCP server
+
+```bash
+cd mcp-server
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python server.py
+```
+
+Wait for: `Uvicorn running on http://0.0.0.0:8000`
+
+### 4 — Start backend
 
 ```bash
 cd backend/pixai-api
 ./gradlew bootRun
 ```
 
-Backend runs on:
+Wait for: `Netty started on port 8081`
 
-```text
-http://localhost:8081
-```
+API docs → http://localhost:8081/swagger-ui.html
 
-Swagger:
-
-```text
-http://localhost:8081/swagger-ui/index.html
-```
-
----
-
-## Build
+### 5 — Start frontend
 
 ```bash
-cd backend/pixai-api
-./gradlew clean build
+cd frontend
+npm install
+npm run dev
 ```
+
+Open → http://localhost:3000
 
 ---
 
-## Current Status
-
-### Completed
-
-* Spring Boot setup
-* WebFlux
-* MongoDB connectivity
-* OpenAPI integration
-* Global exception handling
-* Health endpoint
-
-### In Progress
-
-* Conversation domain
-* Persistence layer
-* MCP integration
-* Image upload workflow
+> **Startup order matters:** MongoDB → MCP server → Backend → Frontend.
+> The backend connects to the MCP server eagerly at boot — if it's not running, Spring fails to start.
