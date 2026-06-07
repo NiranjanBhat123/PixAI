@@ -1,3 +1,12 @@
+
+
+https://github.com/user-attachments/assets/f0407639-2abb-4e6a-9c3b-ce8079b2d386
+
+
+
+
+
+
 # PixAI
 
 PixAI is an AI-powered image assistant that helps users interact with their photos in a conversational way.
